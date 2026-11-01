@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Every school, beach, park, grocery run, GO connection and patio around West Shore, Pickering — on one live map from Team Rajpal.">
+<title>West Shore Amenities Map | Team Rajpal</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+--ink:#08172F; --ink-soft:#294B7A; --paper:#EEF1F4; --card:#FFFFFF;
+--grid-line:#D8DDE3; --red:#DC1C2E; --red-dark:#A8121F; --red-fill:#FFE3E6;
+--blue:#004D9A; --blue-dark:#00376E; --slate:#55606B; --hairline:#C7CCD3;
+--c-school:#6B4FA1; --c-water:#0E86C4; --c-park:#3F7A38; --c-rec:#004D9A;
+--c-shop:#C1762E; --c-dine:#DC1C2E; --c-care:#0E7C86; --c-transit:#55606B;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{background:var(--paper);font-family:Calibri,'Segoe UI',Optima,Arial,sans-serif;color:var(--ink);
+background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);background-size:28px 28px;}
+.hero{background:var(--ink);color:#fff;padding:44px 20px 38px;border-bottom:4px solid var(--red);}
+.hero-inner{max-width:1000px;margin:0 auto;}
+.logobox{display:inline-block;margin-bottom:22px;}
+.logobox img{width:200px;max-width:60vw;height:auto;display:block;}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#9FB3D1;display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.eyebrow::before{content:"";width:22px;height:2px;background:var(--red);display:inline-block;}
+h1{font-family:Cambria,Georgia,serif;font-weight:500;font-size:clamp(28px,5vw,44px);line-height:1.1;margin:0 0 12px;color:#fff;}
+.sub{font-size:17px;color:#C9D4DE;line-height:1.6;margin:0;max-width:66ch;}
+.wrap{max-width:1000px;margin:0 auto;padding:30px 20px 80px;}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 24px;}
+.stat{background:var(--card);border:1px solid var(--hairline);border-top:4px solid var(--blue);border-radius:3px;padding:14px 16px;}
+.stat:nth-child(2){border-top-color:var(--red);}
+.stat:nth-child(3){border-top-color:#C1922E;}
+.stat:nth-child(4){border-top-color:#3F7A38;}
+.stat .n{font-family:Cambria,Georgia,serif;font-size:26px;font-weight:600;}
+.stat:nth-child(1) .n{color:var(--blue);} .stat:nth-child(2) .n{color:var(--red);}
+.stat:nth-child(3) .n{color:#8A6A16;} .stat:nth-child(4) .n{color:#3F7A38;}
+.stat .l{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--slate);margin-top:3px;}
+.map-shell{background:var(--card);border:1px solid var(--hairline);border-radius:3px;padding:18px;}
+.map-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
+.map-title{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--red-dark);}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.chip{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.03em;border:1.5px solid var(--hairline);background:#fff;color:var(--slate);border-radius:20px;padding:6px 12px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s ease;}
+.chip .cdot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+.chip:hover{border-color:var(--ink-soft);color:var(--ink);}
+.chip.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+#map{height:560px;width:100%;border:1px solid var(--hairline);border-radius:3px;}
+@media(max-width:640px){#map{height:420px;}}
+.mk{border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);}
+.mk.proposed{background:#fff !important;}
+.mk.building::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid currentColor;animation:pulse 2s ease-out infinite;}
+@keyframes pulse{0%{transform:scale(.85);opacity:.7}70%{transform:scale(1.5);opacity:0}100%{opacity:0}}
+.info{margin-top:14px;border-top:1px solid var(--hairline);padding:16px 0 4px 16px;border-left:4px solid var(--hairline);min-height:96px;transition:border-color .2s;}
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.badge{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;padding:4px 10px;border-radius:3px;}
+.b-open{background:#E4EBDD;color:#3F5C36;}
+.b-building{background:var(--red-fill);color:var(--red-dark);}
+.b-proposed{background:#E7EEF6;color:var(--slate);}
+.info h3{font-family:Cambria,Georgia,serif;font-weight:600;font-size:20px;margin:0 0 6px;}
+.info p{font-size:14.5px;line-height:1.65;color:var(--ink-soft);margin:0;max-width:74ch;}
+.hint{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--slate);}
+.builders{margin-top:34px;}
+.builders h2{font-family:Cambria,Georgia,serif;font-weight:600;font-size:25px;margin:0 0 6px;}
+.builders h2 span{color:var(--red);}
+.bsub{font-size:14.5px;color:var(--slate);margin:0 0 16px;max-width:72ch;line-height:1.6;}
+.bgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:10px;}
+.bcard{background:var(--card);border:1px solid var(--hairline);border-left:4px solid var(--blue);border-radius:3px;padding:16px 18px;}
+.bcard:hover{border-left-color:var(--red);}
+.bcard .bn{font-family:Cambria,Georgia,serif;font-size:17px;font-weight:600;margin:0 0 4px;}
+.bcard .bp{font-size:13.5px;line-height:1.55;color:var(--ink-soft);margin:0;}
+.cta{margin-top:34px;background:var(--ink);color:#fff;border-radius:3px;border-left:6px solid var(--red);padding:26px 28px;display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;}
+.cta .ct{font-family:Cambria,Georgia,serif;font-size:21px;font-weight:600;margin:0 0 4px;}
+.cta .cs{font-size:14.5px;color:#B9C4CC;margin:0;}
+.cta a{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.05em;text-transform:uppercase;background:var(--red);color:#fff;padding:13px 22px;border-radius:3px;text-decoration:none;white-space:nowrap;}
+.cta a:hover{background:var(--red-dark);}
+.sources{margin-top:26px;font-size:12px;line-height:1.7;color:var(--slate);border-top:1px solid var(--hairline);padding-top:14px;}
+.brand-foot{text-align:center;margin-top:30px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--slate);}
+</style>
+</head>
+<body>
+<div class="hero"><div class="hero-inner">
+<div class="logobox"><img src="https://teamrajpal.com/wp-content/uploads/2023/03/RAJPAL_Logo_White.svg" alt="Team Rajpal"
+     onerror="this.onerror=null;this.src='https://xerxes-pixel.github.io/north-pickering-growth-map/tr-logo.png';this.style.width='110px';this.style.background='#fff';this.style.borderRadius='12px';this.style.padding='10px 12px';"></div>
+<div class="eyebrow">Team Rajpal &mdash; West Shore &middot; Pickering</div>
+<h1>The West Shore amenities map</h1>
+<p class="sub">West Shore is Pickering's original lakeside neighbourhood &mdash; tucked between Petticoat Creek, Frenchman's Bay and Lake Ontario, where 1960s bungalows sit beside brand-new custom builds. Explore every school, beach, park, grocery run and commute link &mdash; on a real map you can zoom, pan, and switch to satellite.</p>
+</div></div>
+<div class="wrap">
+<div class="stats">
+<div class="stat"><div class="n">3</div><div class="l">Waterways on its borders</div></div>
+<div class="stat"><div class="n">3</div><div class="l">Schools inside the neighbourhood</div></div>
+<div class="stat"><div class="n">&asymp;5 min</div><div class="l">Drive to Pickering GO</div></div>
+<div class="stat"><div class="n">2</div><div class="l">Beaches within 5 minutes</div></div>
+</div>
+<div class="map-shell">
+<div class="map-head"><div class="map-title">West Shore &mdash; live map</div></div>
+<div class="filters" id="filters">
+<button class="chip active" data-f="all"><span class="cdot" style="background:linear-gradient(135deg,#6B4FA1 16%,#0E86C4 16% 32%,#3F7A38 32% 48%,#C1762E 48% 64%,#DC1C2E 64% 80%,#0E7C86 80%)"></span>Everything</button>
+<button class="chip" data-f="school"><span class="cdot" style="background:#6B4FA1"></span>Schools</button>
+<button class="chip" data-f="water"><span class="cdot" style="background:#0E86C4"></span>Waterfront &amp; marinas</button>
+<button class="chip" data-f="park"><span class="cdot" style="background:#3F7A38"></span>Parks &amp; trails</button>
+<button class="chip" data-f="rec"><span class="cdot" style="background:#004D9A"></span>Community &amp; rec</button>
+<button class="chip" data-f="shop"><span class="cdot" style="background:#C1762E"></span>Groceries &amp; shopping</button>
+<button class="chip" data-f="dine"><span class="cdot" style="background:#DC1C2E"></span>Dining &amp; entertainment</button>
+<button class="chip" data-f="care"><span class="cdot" style="background:#0E7C86"></span>Health &amp; care</button>
+<button class="chip" data-f="transit"><span class="cdot" style="background:#55606B"></span>Transit &amp; roads</button>
+</div>
+<div id="map"></div>
+<div class="info" id="infoPanel"><span class="hint">Tap any marker to see what it is and where the information comes from. Use the filters above, or the layer control on the map to switch to satellite.</span></div>
+</div>
+<div class="builders">
+<h2>Why people fall for <span>West Shore</span></h2>
+<p class="bsub">Lots here are wide, streets end at the water, and no two blocks look alike &mdash; original 1960s bungalows and sidesplits, renovated two-storeys, and custom rebuilds taking in bay and lake views. Homes range accordingly, which is exactly why a neighbourhood-level comparison matters more here than almost anywhere in Pickering. We live and work in Pickering &mdash; ask us what a street-by-street difference is worth.</p>
+<div class="bgrid">
+<div class="bcard"><div class="bn">The bay life</div><p class="bp">Frenchman's Bay Yacht Club, the Pickering Rouge Canoe Club and dragonboat crews all call the bay home &mdash; plus an accessible kayak launch at the Rotary park.</p></div>
+<div class="bcard"><div class="bn">Beaches both directions</div><p class="bp">A sandy beach on the bay's west spit, and Rouge Beach at the national park's edge &mdash; both an easy bike ride on the Waterfront Trail.</p></div>
+<div class="bcard"><div class="bn">Petticoat Creek on the doorstep</div><p class="bp">A full TRCA conservation park inside the neighbourhood's west edge &mdash; pool and splash pad in season, bluff-top lookouts year-round.</p></div>
+<div class="bcard"><div class="bn">Schools you can walk to</div><p class="bp">Three elementary schools sit inside the neighbourhood &mdash; public, Catholic, and the area's French Immersion school.</p></div>
+<div class="bcard"><div class="bn">Room to grow</div><p class="bp">Wide lots from the cottage-country era make West Shore one of Pickering's favourite streets for additions, rebuilds and custom infill.</p></div>
+<div class="bcard"><div class="bn">Commuter's corner</div><p class="bp">Whites Road's 401 interchange is at the top of the neighbourhood, Pickering GO about five minutes east &mdash; downtown Toronto in roughly half an hour.</p></div>
+</div>
+</div>
+<div class="cta">
+<div>
+<p class="ct">Thinking about buying or selling in West Shore?</p>
+<p class="cs">Search every listing the moment it hits the market &mdash; or call or text Team Rajpal &middot; 647.372.2997. We're Pickering locals; this is our backyard.</p>
+</div>
+<a id="ctaLink" href="https://search.teamrajpal.com">Search West Shore homes</a>
+</div>
+<p class="sources"><strong>Sources &amp; notes:</strong> Park, trail and community-centre details from the City of Pickering (pickering.ca); Petticoat Creek Conservation Park from the Toronto and Region Conservation Authority and Ontario Conservation Areas; school information from the Durham District School Board and Durham Catholic District School Board &mdash; school boundaries change, so confirm your exact address's school with the board before you buy; Steeple Hill Shopping Centre from First Capital; The Shops at Pickering City Centre details from the mall and public filings; hospital from Lakeridge Health; GO service from Metrolinx &mdash; travel times vary by run. Base map &copy; OpenStreetMap contributors; satellite imagery &copy; Esri. Markers with a street address are placed at that address; a few parks and road points are placed at the corner or block described and are approximate. Businesses, hours and plans change &mdash; verify before making decisions.</p>
+<div class="brand-foot">World Class Service &middot; World Class Results<br>Team Rajpal &middot; Re/Max Key2 Real Estate, Brokerage &middot; Seaton, Pickering, Ontario</div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const CAT = {
+ school:{c:"#6B4FA1",label:"Schools"},
+ water:{c:"#0E86C4",label:"Waterfront & marinas"},
+ park:{c:"#3F7A38",label:"Parks & trails"},
+ rec:{c:"#004D9A",label:"Community & recreation"},
+ shop:{c:"#C1762E",label:"Groceries & shopping"},
+ dine:{c:"#DC1C2E",label:"Dining & entertainment"},
+ care:{c:"#0E7C86",label:"Health & care"},
+ transit:{c:"#55606B",label:"Transit & roads"}
+};
+const STATUS = { open:"Open now", building:"Under construction", proposed:"Proposed / planned" };
+const SCH = " School boundaries shift over time &mdash; confirm the school for your exact address with the board before you buy.";
+
+const places = [
+// ---------- SCHOOLS ----------
+{id:"fbps",lat:43.814878,lng:-79.101475,cat:"school",status:"open",name:"Frenchman's Bay Public School",
+ txt:"920 Oklahoma Drive &mdash; the Durham District School Board's French Immersion elementary school for this area, Grades 1&ndash;8, right in the middle of the neighbourhood. Full immersion in Grades 1&ndash;3, half-day French from Grade 4." + SCH + " Source: DDSB."},
+{id:"fairport",lat:43.813190,lng:-79.108988,cat:"school",status:"open",name:"Fairport Beach Public School",
+ txt:"754 Oklahoma Drive &mdash; a small Kindergarten&ndash;Grade 8 DDSB school of roughly 220 students, and a designated walking school: most kids get there on foot. Two public elementary schools within a few blocks of each other is part of what makes West Shore unusual." + SCH + " Source: DDSB."},
+{id:"fenelon",lat:43.815276,lng:-79.109172,cat:"school",status:"open",name:"Father F&eacute;nelon Catholic School",
+ txt:"795 Eyer Drive &mdash; the neighbourhood's Durham Catholic District School Board elementary school, steps from Fairport Beach PS. Three elementary options inside one lakeside neighbourhood: public, Catholic, and French Immersion." + SCH + " Source: DCDSB."},
+{id:"dunbarton",lat:43.819945,lng:-79.119013,cat:"school",status:"open",name:"Dunbarton High School",
+ txt:"655 Sheppard Avenue &mdash; West Shore's public high school, just up Whites Road. One of Durham's biggest secondary schools at roughly 1,800 students, with a wide program range." + SCH + " Source: DDSB."},
+{id:"stmary",lat:43.835014,lng:-79.124334,cat:"school",status:"open",name:"St. Mary Catholic Secondary School",
+ txt:"1918 Whites Road &mdash; the area's Catholic high school, a straight run up Whites Road north of the 401." + SCH + " Source: DCDSB."},
+
+// ---------- WATERFRONT & MARINAS ----------
+{id:"rotary",lat:43.810953,lng:-79.093868,cat:"water",status:"open",name:"Rotary Frenchman's Bay West Park &amp; beach",
+ txt:"The neighbourhood's own waterfront park, on the bay's west spit off Beachpoint Promenade &mdash; sandy beach, picnic areas, fishing spots, an accessible canoe and kayak launch, washrooms, and public art including &ldquo;Water is Medicine&rdquo; by the Indigenous collective Dbaajmowin. Rebuilt in phases from 2018 to 2023 with new walkways, lighting and shoreline restoration; TRCA designates it an environmentally sensitive area. Source: City of Pickering."},
+{id:"fbyc",lat:43.813403,lng:-79.096558,cat:"water",status:"open",name:"Frenchman's Bay Yacht Club",
+ txt:"The community sailing club on Breezy Drive, on West Shore's side of the bay &mdash; moorings, racing, and learn-to-sail programs. Between the yacht club, the canoe club and the dragonboat crews, the bay stays busy from spring launch to fall haul-out."},
+{id:"petticoat",lat:43.801839,lng:-79.109271,cat:"water",status:"open",name:"Petticoat Creek Conservation Park",
+ txt:"1100 Whites Road South &mdash; a full TRCA conservation park on West Shore's western edge, open roughly May to October. Swimming pool and splash pad, picnic sites, and lookouts along the Lake Ontario bluffs, with the Waterfront Trail running through. Paid admission and parking in season. Sources: TRCA; Ontario Conservation Areas."},
+{id:"millennium",lat:43.812585,lng:-79.080155,cat:"water",status:"open",name:"Millennium Square",
+ txt:"The lakeside plaza at the foot of Liverpool Road, directly across the bay &mdash; children's splash pad, seasonal washrooms, benches with open-lake views, and Thursday Night Summer Concerts. The Waterfront Trail and the Nautical Village start here. Source: City of Pickering."},
+{id:"beachfront",lat:43.812800,lng:-79.076000,cat:"water",status:"open",name:"Beachfront Park",
+ txt:"Pickering's rebuilt lakefront park between the bay and Sandy Beach Road. Phase 1 of the revitalization is complete: an elevated walking and cycling path, viewing platforms over Hydro Marsh (herons, terns and shorebirds), barrier-free beach access ramps, and shoreline protection after the 2017 and 2019 storm damage. Further phases are planned. Source: City of Pickering; letstalkpickering.ca."},
+{id:"fbmarina",lat:43.813358,lng:-79.080444,cat:"water",status:"open",name:"Frenchman's Bay Marina",
+ txt:"591 Liverpool Road &mdash; the long-running marina on the bay's east shore, with seasonal slips and boat services. Five minutes around the bay by car, or a pleasant walk along the Waterfront Trail."},
+{id:"rougebeach",lat:43.792869,lng:-79.118138,cat:"water",status:"open",name:"Rouge Beach &mdash; Rouge National Urban Park",
+ txt:"Where the Rouge River meets Lake Ontario, just west of Petticoat Creek &mdash; sand, the river mouth, and some of the best birding in the east GTA, at the lakeside gateway to Canada's first national urban park. A few minutes from West Shore along the waterfront. Source: Parks Canada."},
+{id:"wft",lat:43.803200,lng:-79.102000,cat:"water",status:"open",name:"Waterfront Trail &mdash; West Shore stretch",
+ txt:"The Great Lakes Waterfront Trail runs the length of the neighbourhood's shoreline &mdash; from Rouge Beach past Petticoat's bluffs to the Rotary park beach, then around the bay to Millennium Square and on into Ajax. Trail placement marker is approximate &mdash; access points include Park Crescent, Beachpoint Promenade and West Shore Boulevard. Source: Waterfront Regeneration Trust."},
+
+// ---------- PARKS & TRAILS ----------
+{id:"dunmoore",lat:43.805700,lng:-79.112300,cat:"park",status:"open",name:"Dunmoore Park",
+ txt:"The neighbourhood's big sports park, off Whites Road South &mdash; four tennis courts, three ball diamonds (two lit), a soccer field, playground, washrooms and walking paths, backing toward Petticoat Creek. Source: City of Pickering."},
+{id:"handscomb",lat:43.815000,lng:-79.096100,cat:"park",status:"open",name:"Bruce Handscomb Park",
+ txt:"On Breezy Drive just north of Oklahoma Drive, on the bay's west shore &mdash; two play units (ages 2&ndash;5 and 5&ndash;12), asphalt trails, seating, fishing spots and Waterfront Trail access with views over Frenchman's Bay. Placed at the described corner &mdash; approximate. Source: City of Pickering."},
+{id:"alexrobertson",lat:43.815067,lng:-79.072868,cat:"park",status:"open",name:"Alex Robertson Park",
+ txt:"At the south end of Sandy Beach Road, across the bay &mdash; naturalized trails, public art, and the gravel parking lot that serves as the east gateway to Beachfront Park's new elevated path. Source: City of Pickering."},
+{id:"kinsmen",lat:43.817781,lng:-79.069623,cat:"park",status:"open",name:"Kinsmen Park",
+ txt:"Sandy Beach Road's big ball-diamond park beside Hydro Marsh &mdash; sports fields and picnic space on the east side of the bay, five minutes around by car."},
+
+// ---------- COMMUNITY & REC ----------
+{id:"wscc",lat:43.823100,lng:-79.100400,cat:"rec",status:"open",name:"West Shore Community Centre",
+ txt:"1011&ndash;1015 Bayly Street &mdash; the neighbourhood's own hall, a pine lodge overlooking Frenchman's Bay with a large green space, rentable for gatherings of up to 150. Home base for an active community association that runs family events and park clean-ups. Source: City of Pickering."},
+{id:"escc",lat:43.826849,lng:-79.087060,cat:"rec",status:"open",name:"East Shore Community Centre",
+ txt:"910 Liverpool Road &mdash; community rooms, a gymnasium and seniors' programming, five minutes away at the top of the bay's east side. Source: City of Pickering."},
+{id:"chdrc",lat:43.839452,lng:-79.079744,cat:"rec",status:"open",name:"Chestnut Hill Developments Recreation Complex",
+ txt:"1867 Valley Farm Road &mdash; Pickering's flagship rec complex: pools, twin ice pads, fitness centre, squash and tennis. About ten minutes from West Shore. Source: City of Pickering."},
+{id:"donbeer",lat:43.824614,lng:-79.067142,cat:"rec",status:"open",name:"Don Beer Arena",
+ txt:"940 Dillingham Road &mdash; the local hockey and skating barn, with three ice pads, a short hop along Bayly. Source: City of Pickering."},
+{id:"librm",lat:43.812324,lng:-79.125047,cat:"rec",status:"open",name:"Pickering Public Library &mdash; Rougemount Branch",
+ txt:"The closest library branch, on Rougemount Drive off Kingston Road &mdash; a neighbourhood branch minutes from West Shore's west gate. The Central Library downtown is the full-service flagship. Source: Pickering Public Library."},
+{id:"libcentral",lat:43.837401,lng:-79.083426,cat:"rec",status:"open",name:"Pickering Public Library &mdash; Central Branch",
+ txt:"One The Esplanade, beside City Hall and the Esplanade Park &mdash; the main branch, next door to the Pickering City Centre. Source: Pickering Public Library."},
+
+// ---------- GROCERIES & SHOPPING ----------
+{id:"steeplehill",lat:43.818510,lng:-79.118045,cat:"shop",status:"open",name:"Steeple Hill Shopping Centre &mdash; FreshCo",
+ txt:"670 Kingston Road, at Whites &mdash; the everyday run: FreshCo for groceries with Shoppers Drug Mart, banks, takeout and services in the same First Capital centre. Three to four minutes up Whites Road. Source: First Capital."},
+{id:"foodbasics",lat:43.829747,lng:-79.093219,cat:"shop",status:"open",name:"Food Basics &mdash; Kingston &amp; Liverpool",
+ txt:"1105B Kingston Road &mdash; the budget grocery stop on the Kingston Road corridor, about six minutes from the neighbourhood."},
+{id:"loblaws",lat:43.832350,lng:-79.091383,cat:"shop",status:"open",name:"Loblaws &mdash; 1792 Liverpool Road",
+ txt:"The full-size Loblaws just north of the 401 at Liverpool &mdash; the big weekly shop, with everything from bakery to pharmacy under one roof."},
+{id:"metro",lat:43.829811,lng:-79.122521,cat:"shop",status:"open",name:"Metro &mdash; Whites Road",
+ txt:"The Metro plaza on Whites Road just north of the 401, with a Rexall pharmacy alongside &mdash; handy on the way home from the Whites Road ramps."},
+{id:"pcc",lat:43.835633,lng:-79.086826,cat:"shop",status:"open",name:"The Shops at Pickering City Centre",
+ txt:"1355 Kingston Road &mdash; the mall. Renamed from Pickering Town Centre in May 2024, with 150+ stores including Farm Boy, Winners/HomeSense and H&amp;M, plus Cineplex. The surrounding blocks are being rebuilt as a high-density downtown &mdash; the first condo towers are already under construction, and a Splitsville bowling-entertainment centre has been announced for the mall. About eight minutes from West Shore. Sources: mall and public filings."},
+{id:"walmart",lat:43.844188,lng:-79.068086,cat:"shop",status:"open",name:"Walmart Supercentre &mdash; Brock Road",
+ txt:"1899 Brock Road in the SmartCentres power centre &mdash; the big-box run: Walmart with full grocery, and the usual large-format neighbours."},
+{id:"nofrills",lat:43.798266,lng:-79.141306,cat:"shop",status:"open",name:"No Frills &mdash; Island Road",
+ txt:"Technically across the city line in West Rouge (Toronto), but for the south end of West Shore it's often the quickest discount-grocery run &mdash; five minutes west along the lakeshore."},
+
+// ---------- DINING & ENTERTAINMENT ----------
+{id:"nautical",lat:43.814500,lng:-79.080700,cat:"dine",status:"open",name:"Nautical Village &mdash; Liverpool Road South",
+ txt:"Pickering's lakefront strip, directly across the bay &mdash; a walkable row of patios, caf&eacute;s (including the Open Studio Art Caf&eacute;), ice cream and fish-and-chip stops between the marina and Millennium Square. Summer evenings here feel like a holiday town."},
+{id:"row",lat:43.820500,lng:-79.113500,cat:"dine",status:"open",name:"Kingston Road restaurant row",
+ txt:"The Dunbarton stretch of Kingston Road, three minutes up Whites &mdash; Chuck's Roadhouse, Swiss Chalet, Lone Star Texas Grill, Wimpy's Diner, Wild Wing, bubble tea, shawarma, and takeout of every stripe."},
+{id:"cineplex",lat:43.834784,lng:-79.087891,cat:"dine",status:"open",name:"Cineplex Cinemas Pickering",
+ txt:"At the Pickering City Centre, 1355 Kingston Road &mdash; the local movie night, opened in 2018 in the mall's east end. Source: Cineplex."},
+{id:"casino",lat:43.843731,lng:-79.053765,cat:"dine",status:"open",name:"Pickering Casino Resort &mdash; Durham Live",
+ txt:"888 Durham Live Avenue &mdash; the casino resort east along Bayly: gaming floor, hotel tower, restaurants and live entertainment, with more of the Durham Live entertainment district still to come. About ten minutes away."},
+
+// ---------- HEALTH & CARE ----------
+{id:"sdm",lat:43.818087,lng:-79.118854,cat:"care",status:"open",name:"Shoppers Drug Mart &mdash; Steeple Hill",
+ txt:"650 Kingston Road &mdash; the closest full pharmacy to the neighbourhood, in the Steeple Hill centre at Whites and Kingston."},
+{id:"medrow",lat:43.822647,lng:-79.116410,cat:"care",status:"open",name:"Kingston Road medical cluster",
+ txt:"Walk-in clinics, family practices, dentists, physio, X-ray and ultrasound, and medical pharmacies line Kingston Road through Dunbarton &mdash; the closest concentration of everyday health care, three to four minutes up Whites Road."},
+{id:"hospital",lat:43.837198,lng:-79.017337,cat:"care",status:"open",name:"Lakeridge Health Ajax Pickering Hospital",
+ txt:"580 Harwood Avenue South, Ajax &mdash; the nearest full-service hospital with a 24/7 emergency department, roughly 12 minutes east via Bayly or the 401. Source: Lakeridge Health."},
+
+// ---------- TRANSIT & ROADS ----------
+{id:"gostation",lat:43.831463,lng:-79.084413,cat:"transit",status:"open",name:"Pickering GO Station",
+ txt:"On Bayly at Liverpool &mdash; Lakeshore East trains make Union in about 40 minutes, with frequent all-day service and rush-hour express runs. Parking structure, Durham Region Transit terminal, and the landmark enclosed pedestrian bridge over the 401 to the City Centre side. DRT local routes along Bayly and West Shore Boulevard feed the station. Source: Metrolinx."},
+{id:"rougehillgo",lat:43.780271,lng:-79.130499,cat:"transit",status:"open",name:"Rouge Hill GO Station",
+ txt:"The neighbouring stop on the Lakeshore East line, right on the lake by Rouge Beach &mdash; a handy alternative six or seven minutes west, and the Waterfront Trail runs right past it. Source: Metrolinx."},
+{id:"hwy401",lat:43.821800,lng:-79.120200,cat:"transit",status:"open",name:"Highway 401 &mdash; Whites Road interchange",
+ txt:"West Shore's on-ramp sits at the top of the neighbourhood &mdash; a full interchange at Whites Road, putting downtown Toronto about half an hour away, traffic willing. DRT's Pulse corridor runs along Kingston Road just south of it."}
+];
+</script>
+<script>
+const map = L.map('map', { scrollWheelZoom:false, zoomSnap:0.25 }).setView([43.8125, -79.0995], 14);
+// Basemap: OpenStreetMap. Two providers were ruled out on Team Rajpal's Seaton map, so don't "upgrade" this:
+//   - CARTO is key-gated now and silently serves an "API KEY REQUIRED" watermark
+//     once anonymous usage trips its quota (HTTP 200, so no tileerror ever fires).
+//   - Esri's street basemap needs no key, but its road data lags new construction.
+// OSM needs no key. There is deliberately NO automatic fallback.
+const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:19, detectRetina:true,
+  attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
+  maxZoom:19, detectRetina:true, attribution:'Imagery &copy; Esri'});
+L.control.layers({ "Map":osm, "Satellite":sat }, null, {position:'topright'}).addTo(map);
+
+const infoPanel = document.getElementById('infoPanel');
+const markers = {};
+const group = L.featureGroup().addTo(map);
+
+function iconFor(p){
+  const c = CAT[p.cat].c;
+  const size = 17;
+  const inner = p.status === 'proposed'
+    ? 'background:#fff;border-color:'+c+';border-style:dashed;'
+    : 'background:'+c+';';
+  const cls = 'mk' + (p.status==='building' ? ' building' : '') + (p.status==='proposed' ? ' proposed' : '');
+  return L.divIcon({
+    className:'',
+    html:'<div class="'+cls+'" style="position:relative;width:'+size+'px;height:'+size+'px;color:'+c+';'+inner+'"></div>',
+    iconSize:[size,size], iconAnchor:[size/2,size/2]
+  });
+}
+
+places.forEach(p => {
+  const m = L.marker([p.lat,p.lng], { icon: iconFor(p), title: p.name.replace(/&[a-z]+;/g,'') });
+  m.on('click', () => select(p.id));
+  m.addTo(group);
+  markers[p.id] = { marker:m, data:p };
+});
+// Pins that sit outside the neighbourhood core — shown on the map, but not used
+// to frame the opening view.
+const OUTLIERS = ['stmary','metro','foodbasics','loblaws','pcc','cineplex','libcentral','chdrc','walmart','casino','hospital','rougehillgo','nofrills'];
+function coreBounds(list){
+  const core = list.filter(p => OUTLIERS.indexOf(p.id) === -1);
+  const use = core.length ? core : list;
+  return L.latLngBounds(use.map(p => [p.lat, p.lng]));
+}
+map.fitBounds(coreBounds(places).pad(0.08), { maxZoom:14 });
+
+function select(id){
+  const p = markers[id].data;
+  const c = CAT[p.cat].c;
+  infoPanel.style.borderLeftColor = c;
+  infoPanel.innerHTML =
+    '<div class="badges">'
+    + '<span class="badge b-'+p.status+'">'+STATUS[p.status]+'</span>'
+    + '<span class="badge" style="background:'+c+'1A;color:'+c+'">'+CAT[p.cat].label+'</span>'
+    + '</div>'
+    + '<h3>'+p.name+'</h3><p>'+p.txt+'</p>';
+  infoPanel.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+document.getElementById('filters').addEventListener('click', e => {
+  const btn = e.target.closest('.chip'); if(!btn) return;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  const f = btn.getAttribute('data-f');
+  group.clearLayers();
+  places.forEach(p => {
+    if(f==='all' || p.cat===f){ markers[p.id].marker.addTo(group); }
+  });
+  const vis = places.filter(p => f==='all' || p.cat===f);
+  if(vis.length){
+    const b = (f==='all') ? coreBounds(vis) : L.latLngBounds(vis.map(p=>[p.lat,p.lng]));
+    map.fitBounds(b.pad(0.12), { maxZoom:14.5 });
+  }
+});
+</script>
+</body>
+</html>
